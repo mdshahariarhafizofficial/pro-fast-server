@@ -35,7 +35,22 @@ async function run() {
     const db = client.db(process.env.DB_NAME);
     const parcelCollection = db.collection("parcels");
 
-    
+// ✅ POST API: নতুন পার্সেল সংরক্ষণ
+    app.post("/parcels", async (req, res) => {
+      const parcel = req.body;
+
+      const result = await parcelCollection.insertOne(parcel);
+      res.send({
+        message: "Parcel saved successfully!",
+        insertedId: result.insertedId,
+      });
+    });    
+
+    // GET: Retrieve all parcels
+    app.get("/parcels", async (req, res) => {
+      const parcels = await parcelCollection.find().toArray();
+      res.send(parcels);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -56,5 +71,5 @@ app.get("/", (req, res) => {
 
 // Server চালু করছি
 app.listen(port, () => {
-  console.log(`🚀 Server Running: http://localhost:${port}`);
+  console.log(`🚀 Server is running on: http://localhost:${port}`);
 });
