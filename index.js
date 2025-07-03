@@ -46,11 +46,24 @@ async function run() {
       });
     });    
 
-    // GET: Retrieve all parcels
+    //GET: Retrieve all parcels or filter by email (matched with 'created_by' in DB)
     app.get("/parcels", async (req, res) => {
-      const parcels = await parcelCollection.find().toArray();
-      res.send(parcels);
+    const email = req.query.email;
+
+    let query = {};
+    if (email) {
+        query = { created_by: email }; // Database field
+    }
+
+    const parcels = await parcelCollection
+        .find(query)
+        .sort({ createdAt: -1 }) // Sort by createdAt in descending order
+        .toArray();
+
+    res.send(parcels);
     });
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
