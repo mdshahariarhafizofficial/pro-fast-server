@@ -48,7 +48,7 @@ async function run() {
 
     //GET: Retrieve all parcels or filter by email (matched with 'created_by' in DB)
     app.get("/parcels", async (req, res) => {
-    const email = req.query.email;
+    const email = req?.query?.email;
 
     let query = {};
     if (email) {
@@ -63,6 +63,15 @@ async function run() {
     res.send(parcels);
     });
 
+const { ObjectId } = require("mongodb");
+
+  // DELETE: Delete a parcel by ID
+  app.delete("/parcels/:id", async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await parcelCollection.deleteOne(query);
+    res.send(result);
+  });
 
 
     // Send a ping to confirm a successful connection
