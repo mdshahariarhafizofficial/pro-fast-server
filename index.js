@@ -74,6 +74,16 @@ const { ObjectId } = require("mongodb");
   });
 
 
+  // GET: Get a single parcel by MongoDB _id
+  app.get("/parcels/:id", async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const parcel = await parcelCollection.findOne(query);
+    res.send(parcel);
+
+  });
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
