@@ -128,6 +128,25 @@ const { ObjectId } = require("mongodb");
     });
   });
 
+  // Get Payment
+  app.get("/payments", async (req, res) => {
+  const email = req.query.email;
+  
+  let query = {};
+
+  if (email) {
+    query = { email: email };
+  }
+
+  const payments = await paymentsCollection
+    .find(query)
+    .sort({ paidAt: -1 })
+    .toArray();
+
+  res.send(payments);
+});
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
