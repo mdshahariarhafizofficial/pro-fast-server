@@ -36,6 +36,7 @@ async function run() {
     // Database এবং collection reference নিচ্ছি
     const db = client.db(process.env.DB_NAME);
     const parcelCollection = db.collection("parcels");
+    const paymentsCollection = db.collection("payments");
 
 // ✅ POST API: নতুন পার্সেল সংরক্ষণ
     app.post("/parcels", async (req, res) => {
@@ -103,6 +104,29 @@ const { ObjectId } = require("mongodb");
       res.status(500).send({ error: err.message });
     }
   });  
+
+  // Payment History
+  app.post("/payments", async (req, res) => {
+  const payment = req.body;
+
+  // Add timestamp as "paidAt"
+  payment.paidAt = new Date();
+  payment.status = "paid";
+
+  const paymentResult = await paymentsCollection.insertOne(payment);
+
+  // Update parcel payment status
+  const parcelId = payment.parcelId;
+  const filter = { _id: new ObjectId(parcelId) };
+  const update = { $set: { paymentStatus: "paid" } };
+  const parcelResult = await db.collection("parcels").updateOne(filter, update);
+
+  res.send({
+    message: "Payment saved and parcel updated",
+    paymentInsertedId: paymentResult.insertedId,
+    parcelModified: parcelResult.modifiedCount
+    });
+  });
 
 
     // Send a ping to confirm a successful connection
