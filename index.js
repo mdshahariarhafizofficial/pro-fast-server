@@ -2,9 +2,11 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const Stripe = require("stripe");
 const { MongoClient, ServerApiVersion } = require('mongodb');
 // .env ফাইল থেকে কনফিগারেশন লোড করছি
 dotenv.config();
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -82,6 +84,25 @@ const { ObjectId } = require("mongodb");
     res.send(parcel);
 
   });
+
+  // Payment API
+  app.post("/create-payment-intent", async (req, res) => {
+    const { amount } = req.body;
+
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount * 100, // টাকাকে পয়সায় রূপান্তর
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    } catch (err) {
+      res.status(500).send({ error: err.message });
+    }
+  });  
 
 
     // Send a ping to confirm a successful connection
