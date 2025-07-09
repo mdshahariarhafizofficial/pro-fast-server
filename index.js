@@ -1,19 +1,42 @@
-// express, cors, dotenv প্যাকেজগুলো ইমপোর্ট করছি
+// express, cors, dotenv
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const Stripe = require("stripe");
+const admin = require("firebase-admin");
+const { initializeApp } = require('firebase-admin/app');
 const { MongoClient, ServerApiVersion } = require('mongodb');
-// .env ফাইল থেকে কনফিগারেশন লোড করছি
+const serviceAccount = require("./pro-fast-firebase-adminsdk-key.json");
+// .env
 dotenv.config();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware: অন্য জায়গা থেকে অনুরোধ আসতে দিলে (CORS) এবং JSON ডেটা রিড করতে পারি
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+// Middleware
 app.use(cors());
-app.use(express.json()); // JSON body পার্স করার middleware
+app.use(express.json());
+
+// Verify FB Token
+const verifyFBToken = async (req, res, next) => {
+  const token = req?.headers?.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).send({message: 'unauthorized Access!'})
+  }
+  try{
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.decoded = decoded;
+    next()
+  }
+  catch (error) {
+    return res.status(403).send({ message: 'forbidden access' })
+  }
+} 
 
 
 // ✅ MongoDB connection setup
@@ -42,7 +65,7 @@ async function run() {
 // Post User
     app.post('/users', async (req, res) => {
       const user = req.body;
-      const {email} = req.body.email;
+      const email = user.email;
       const existingUser = await usersCollection.findOne({email});
 
       if (existingUser) {
@@ -65,9 +88,9 @@ async function run() {
     });    
 
     //GET: Retrieve all parcels or filter by email (matched with 'created_by' in DB)
-    app.get("/parcels", async (req, res) => {
+    app.get("/parcels", verifyFBToken, async (req, res) => {
     const email = req?.query?.email;
-
+  
     let query = {};
     if (email) {
         query = { created_by: email }; // Database field
