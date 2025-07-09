@@ -58,8 +58,10 @@ async function run() {
 
     // Database এবং collection reference নিচ্ছি
     const db = client.db(process.env.DB_NAME);
+
     const usersCollection = db.collection("users");
     const parcelCollection = db.collection("parcels");
+    const ridersCollection = db.collection("riders");
     const paymentsCollection = db.collection("payments");
 
 // Post User
@@ -75,6 +77,46 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
+
+// Post Rider
+app.post('/riders', async (req, res) => {
+  const riderInfo = req.body;
+  const result = await ridersCollection.insertOne(riderInfo);
+  res.send(result)
+})
+
+// GET: Get all riders or filter by status query param
+app.get("/riders", async (req, res) => {
+  const status = req.query.status;
+
+  let query = {};
+  if (status) {
+    query.status = status;  // filter by status if provided
+  }
+
+  const riders = await ridersCollection.find(query).toArray();
+  res.send(riders);
+});
+
+
+// PATCH: Update rider status by ID
+app.patch("/riders/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedStatus = req.body.status;
+
+  const filter = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $set: {
+      status: updatedStatus,
+    },
+  };
+
+  const result = await ridersCollection.updateOne(filter, updateDoc);
+
+  res.send(result);
+});
+
+
 
 // ✅ POST API: নতুন পার্সেল সংরক্ষণ
     app.post("/parcels", async (req, res) => {
