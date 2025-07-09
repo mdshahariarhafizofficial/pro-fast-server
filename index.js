@@ -35,8 +35,23 @@ async function run() {
 
     // Database এবং collection reference নিচ্ছি
     const db = client.db(process.env.DB_NAME);
+    const usersCollection = db.collection("users");
     const parcelCollection = db.collection("parcels");
     const paymentsCollection = db.collection("payments");
+
+// Post User
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const {email} = req.body.email;
+      const existingUser = await usersCollection.findOne({email});
+
+      if (existingUser) {
+        return res.send({ message: "User already exists" });
+      }
+
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
 
 // ✅ POST API: নতুন পার্সেল সংরক্ষণ
     app.post("/parcels", async (req, res) => {
