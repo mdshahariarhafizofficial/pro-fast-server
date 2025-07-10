@@ -38,17 +38,6 @@ const verifyFBToken = async (req, res, next) => {
   }
 } 
 
-// Verify Admin
-const verifyAdmin = async(req, res, next) => {
-  const email = req.decoded.email;
-  const query = {email};
-  const user = await usersCollection.findOne(query);
-
-  if (!user || user.role !== 'admin') {
-    return res.status(403).send({ message: 'forbidden access' });
-  }
-  next();
-}
 
 
 // ✅ MongoDB connection setup
@@ -75,6 +64,18 @@ async function run() {
     const parcelCollection = db.collection("parcels");
     const ridersCollection = db.collection("riders");
     const paymentsCollection = db.collection("payments");
+
+// Verify Admin
+const verifyAdmin = async(req, res, next) => {
+  const email = req.decoded.email;
+  const query = {email};
+  const user = await usersCollection.findOne(query);
+
+  if (!user || user.role !== 'admin') {
+    return res.status(403).send({ message: 'forbidden access' });
+  }
+  next();
+}
 
 // Post User
     app.post('/users', async (req, res) => {
