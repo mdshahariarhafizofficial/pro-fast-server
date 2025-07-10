@@ -78,6 +78,41 @@ async function run() {
       res.send(result);
     })
 
+// Get User Search Query
+app.get("/users/search", async (req, res) => {
+  const queryText = req.query.query;
+
+  const searchRegex = new RegExp(queryText, "i"); // case-insensitive
+  const query = {
+    role: { $ne: "admin" }, // exclude admins
+    $or: [
+      { name: { $regex: searchRegex } },
+      { email: { $regex: searchRegex } }
+    ]
+  };
+
+  const users = await db.collection("users").find(query).toArray();
+  res.send(users);
+});
+    
+// Make Admin role
+app.patch("/users/:id/make-admin", async (req, res) => {
+  const id = req.params.id;
+
+  const filter = { _id: new ObjectId(id) };
+  const update = {
+    $set: { role: "admin" },
+  };
+
+  const result = await db.collection("users").updateOne(filter, update);
+  res.send({
+    message: "User role updated to admin",
+    modifiedCount: result.modifiedCount,
+  });
+});
+
+
+
 // Post Rider
 app.post('/riders', async (req, res) => {
   const riderInfo = req.body;
