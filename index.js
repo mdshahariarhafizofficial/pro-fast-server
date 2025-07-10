@@ -38,6 +38,18 @@ const verifyFBToken = async (req, res, next) => {
   }
 } 
 
+// Verify Admin
+const verifyAdmin = async(req, res, next) => {
+  const email = req.decoded.email;
+  const query = {email};
+  const user = await usersCollection.findOne(query);
+
+  if (!user || user.role !== 'admin') {
+    return res.status(403).send({ message: 'forbidden access' });
+  }
+  next();
+}
+
 
 // ✅ MongoDB connection setup
 const uri = process.env.MONGODB_URI;
@@ -95,7 +107,7 @@ app.get("/users/search", async (req, res) => {
 });
     
 // Make Admin role
-app.patch("/users/:id/make-admin", async (req, res) => {
+app.patch("/users/:id/make-admin", verifyFBToken, verifyAdmin, async (req, res) => {
   const id = req.params.id;
 
   const filter = { _id: new ObjectId(id) };
@@ -113,7 +125,7 @@ app.patch("/users/:id/make-admin", async (req, res) => {
 // Remove Admin Role
 
 // PATCH: Remove admin role from user
-app.patch("/users/:id/remove-admin", async (req, res) => {
+app.patch("/users/:id/remove-admin", verifyFBToken, verifyAdmin, async (req, res) => {
   const id = req.params.id;
 
   const filter = { _id: new ObjectId(id) };
@@ -154,7 +166,7 @@ app.post('/riders', async (req, res) => {
 })
 
 // GET: Get all riders or filter by status query param
-app.get("/riders", async (req, res) => {
+app.get("/riders", verifyFBToken, verifyAdmin, async (req, res) => {
   const status = req.query.status;
 
   let query = {};
