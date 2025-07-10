@@ -84,7 +84,6 @@ app.get("/users/search", async (req, res) => {
 
   const searchRegex = new RegExp(queryText, "i"); // case-insensitive
   const query = {
-    role: { $ne: "admin" }, // exclude admins
     $or: [
       { name: { $regex: searchRegex } },
       { email: { $regex: searchRegex } }
@@ -111,6 +110,40 @@ app.patch("/users/:id/make-admin", async (req, res) => {
   });
 });
 
+// Remove Admin Role
+
+// PATCH: Remove admin role from user
+app.patch("/users/:id/remove-admin", async (req, res) => {
+  const id = req.params.id;
+
+  const filter = { _id: new ObjectId(id) };
+  const update = {
+    $set: { role: "user" },
+  };
+
+  const result = await db.collection("users").updateOne(filter, update);
+  res.send({
+    message: "User role updated to user",
+    modifiedCount: result.modifiedCount,
+  });
+});
+
+// Get User Role
+app.get("/users/role/:email", async (req, res) => {
+  const email = req.params.email;
+
+  if (!email) {
+    return res.status(400).send({ message: "Email is required" });
+  }
+
+  const user = await db.collection("users").findOne({ email });
+
+  if (!user) {
+    return res.status(404).send({ message: "User not found" });
+  }
+
+  res.send({ role: user.role || "user" });
+});
 
 
 // Post Rider
