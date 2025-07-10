@@ -102,16 +102,28 @@ app.get("/riders", async (req, res) => {
 // PATCH: Update rider status by ID
 app.patch("/riders/:id", async (req, res) => {
   const id = req.params.id;
-  const updatedStatus = req.body.status;
+  const {status, email} = req.body;
 
   const filter = { _id: new ObjectId(id) };
   const updateDoc = {
     $set: {
-      status: updatedStatus,
+      status,
     },
   };
 
+
   const result = await ridersCollection.updateOne(filter, updateDoc);
+
+  // Update User Role
+  if (status === 'approve') {
+    const userQuery = {email};
+    const updatedRole = {
+      $set: {
+        role: 'rider',
+      }
+    };
+    const roleResult = await usersCollection.updateOne(userQuery, updatedRole);
+  };
 
   res.send(result);
 });
